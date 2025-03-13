@@ -1,5 +1,6 @@
 use reqwest::{header, Client, Error};
-use crate::models::User;
+use serde_json::json;
+use crate::models::{ApiResponse, User};
 
 pub struct ApiClient {
     client: Client,
@@ -20,16 +21,67 @@ impl ApiClient {
         }
     }
 
-    /// GET-запрос для получения пользователей
-    pub async fn get_users(&self) -> Result<Vec<User>, Error> {
+    pub async fn create_user(&self, username: &String) -> Result<(), Error> {
         let url = format!("{}/users", self.base_url);
-        let response = self.client
-            .get(&url)
-            .send()
-            .await?
-            .json::<Vec<User>>()
-            .await?;
+        let limit: i64 = 16106127360;
+        let payload = json!({
+            "username": username,
+            "trafficLimitStrategy": "DAY",
+            "trafficLimitBytes": limit, // 15 GB
+            "expireAt": serde_json::Value::Null
+        });
 
-        Ok(response)
+        let response = self.client.post(&url).json(&payload).send().await?;
+
+        if response.status().is_success() {
+            Ok(())
+        } else {
+            Err(Error::from(response.error_for_status().unwrap_err()))
+        }
+    }
+
+    pub async fn get_user(&self, user_id: &str) -> Result<User, Error> {
+        let url = format!("{}/users/username/{}", self.base_url, user_id);
+
+        let response = self.client.get(&url).send().await?;
+
+        if response.status().is_success() {
+            let user: ApiResponse<User> = response.json().await?;
+            Ok(user.response)
+        } else {
+            Err(Error::from(response.error_for_status().unwrap_err()))
+        }
+    }
+
+    pub async fn renewal(&self, uuid: &str, expire_at: &str) -> Result<(), Error> {
+        let url = format!("{}/users/update", self.base_url);
+        let payload = json!({
+            "uuid": uuid,
+            "expireAt": expire_at
+        });
+        let response = self.client.post(&url).json(&payload).send().await?;
+
+        if response.status().is_success() {
+            Ok(())
+        } else {
+            Err(Error::from(response.error_for_status().unwrap_err()))
+        }
+    }
+
+    pub async fn select_inbound(&self, uuid: &str, inbound_uuid: &str) -> Result<(), Error> {
+        let url = format!("{}/users/update", self.base_url);
+        let payload = json!({
+            "uuid": uuid,
+            "activeUserInbounds": [
+                inbound_uuid
+            ]
+        });
+        let response = self.client.post(&url).json(&payload).send().await?;
+
+        if response.status().is_success() {
+            Ok(())
+        } else {
+            Err(Error::from(response.error_for_status().unwrap_err()))
+        }
     }
 }

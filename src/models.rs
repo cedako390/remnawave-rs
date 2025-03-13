@@ -1,14 +1,24 @@
 use serde::{Deserialize, Serialize};
 
-/// Структура пользователя
 #[derive(Debug, Deserialize)]
-pub struct User {
-    pub id: u32,
-    pub name: String,
+pub struct ApiResponse<T> {
+    pub response: T,
 }
 
-/// Структура для создания нового пользователя
-#[derive(Serialize)]
-struct NewUser {
-    name: String,
+#[derive(Serialize, Deserialize)]
+pub struct User {
+    #[serde(rename = "uuid")]
+    pub uuid: String,
+
+    #[serde(rename = "shortUuid")]
+    pub short_uuid: String,
+
+    #[serde(rename = "status")]
+    pub status: String,
+
+    #[serde(rename = "expireAt")]
+    pub expire_at: String,
+
+    #[serde(rename = "subscriptionUrl")]
+    pub subscription_url: String,
 }
