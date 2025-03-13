@@ -21,7 +21,7 @@ impl ApiClient {
         }
     }
 
-    pub async fn create_user(&self, username: &String) -> Result<(), Error> {
+    pub async fn create_user(&self, username: &str) -> Result<(), Error> {
         let url = format!("{}/users", self.base_url);
         let limit: i64 = 16106127360;
         let payload = json!({
